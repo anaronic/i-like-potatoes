@@ -8,6 +8,17 @@ st.title("🥔 Do you like potatoes?")
 
 AUDIO_PATH = "song.mp3" 
 
+LYRICS = [
+    ("Lazy", "..."),
+    ("Crazy", "..."),
+    ("Scratching", "..."),
+    ("Sports cars", "..."),
+    ("I like", "potatoes"),
+    ("I don't like", "tomatoes :("),
+    ("I'm goin'", "fishin'"),
+    ("'Cause I'm on", "a mission")
+]
+
 uploaded_files = st.file_uploader("Upload 8 Photos", type=['jpg', 'jpeg', 'png'], accept_multiple_files=True)
 
 if st.button("Generate a cute reel"):
@@ -16,60 +27,69 @@ if st.button("Generate a cute reel"):
     elif not os.path.isfile(AUDIO_PATH):
         st.error(f"'{AUDIO_PATH}' not found in GitHub!")
     else:
-        with st.spinner("🎬 Generating..."):
+        with st.spinner("🎬 Adding text and rendering..."):
             temp_dir = tempfile.mkdtemp()
-            img_paths = []
-            
-            for i, uploaded_file in enumerate(uploaded_files):
-                path = os.path.join(temp_dir, f"img_{i}.jpg")
-                with open(path, "wb") as f:
-                    f.write(uploaded_file.read())
-                img_paths.append(path)
+            img_paths = [os.path.join(temp_dir, f"img_{i}.jpg") for i in range(8)]
+            for i, f in enumerate(uploaded_files):
+                with open(img_paths[i], "wb") as out:
+                    out.write(f.getvalue())
 
             # --- DIMENSIONS & TIMING ---
-            W, H = 1080, 1350  # The 4:5 Tradeoff
+            W, H = 1080, 1350
             total_duration = 16.54
             interval_len = total_duration / 16
             photo_len = interval_len * 2
             
-            # Background
-            bg = ColorClip(size=(W, H), color=(0,0,0)).with_duration(total_duration)
-            layers = [bg]
+            layers = [ColorClip(size=(W, H), color=(0,0,0)).with_duration(total_duration)]
 
             for i, path in enumerate(img_paths):
                 p_start = i * photo_len
+                left_text_str, right_text_str = LYRICS[i]
                 
-                # Setup Image: Scale to fit 1350px height first
+                # Setup Image
                 clip = ImageClip(path).with_duration(photo_len).resized(height=H)
-                
-                # Crop width to 1080px if the photo is wider
-                if clip.w > W:
-                    clip = clip.cropped(x_center=clip.w/2, width=W)
-                # If the photo is narrower than 1080 after resizing to H, scale to W instead
-                elif clip.w < W:
-                    clip = ImageClip(path).with_duration(photo_len).resized(width=W)
-                    clip = clip.cropped(y_center=clip.h/2, height=H)
+                if clip.w > W: clip = clip.cropped(x_center=clip.w/2, width=W)
 
-                # --- REVEAL LOGIC (W=1080, Center=540) ---
-                # Left half: Starts at p_start
-                left = (clip.cropped(x1=0, y1=0, x2=540, y2=H)
-                        .with_start(p_start)
-                        .with_position((0, 0)))
+                # --- VISUAL REVEALS ---
+                left_img = (clip.cropped(x1=0, y1=0, x2=540, y2=H)
+                            .with_start(p_start).with_position((0, 0)))
                 
-                # Right half: Starts 1 interval later
-                right = (clip.cropped(x1=540, y1=0, x2=W, y2=H)
-                         .with_duration(interval_len) 
-                         .with_start(p_start + interval_len)
-                         .with_position((540, 0)))
+                right_img = (clip.cropped(x1=540, y1=0, x2=W, y2=H)
+                             .with_duration(interval_len)
+                             .with_start(p_start + interval_len).with_position((540, 0)))
+
+                # --- TEXT LAYERS ---
+                # Styling to match your image: White, Sans-Serif, with a black stroke
+                def create_text(txt, start, duration, pos_x):
+                    return (TextClip(
+                                text=txt,
+                                font_size=70,
+                                color='white',
+                                font='Arial-Bold', # Standard Linux font
+                                stroke_color='black',
+                                stroke_width=2,
+                                method='label'
+                            )
+                            .with_start(start)
+                            .with_duration(duration)
+                            .with_position((pos_x, 'center')))
+
+                # Left Text: Displays for the full 2 intervals (photo_len)
+                # Position: Center of the left half (540/2 = 270)
+                l_text = create_text(left_text_str, p_start, photo_len, 270 - 100) 
                 
-                layers.extend([left, right])
+                # Right Text: Displays only starting at interval 2
+                # Position: Center of the right half (540 + 270 = 810)
+                r_text = create_text(right_text_str, p_start + interval_len, interval_len, 810 - 100)
+
+                layers.extend([left_img, right_img, l_text, r_text])
 
             # --- AUDIO & EXPORT ---
             audio = AudioFileClip(AUDIO_PATH).subclipped(0, total_duration)
             final_vid = CompositeVideoClip(layers, size=(W, H)).with_audio(audio)
             
-            out_file = os.path.join(temp_dir, "sync_4_5.mp4")
-            final_vid.write_videofile(out_file, fps=24, codec="libx264", audio_codec="aac")
+            out_file = os.path.join(temp_dir, "final_sync.mp4")
+            final_vid.write_videofile(out_file, fps=24, codec="libx264")
 
             st.video(out_file)
-            st.download_button("Download and send it to your tomato hater", open(out_file, "rb"), "potato_4_5.mp4")
+            st.download_button("Download and share it with your tomato hater.", open(out_file, "rb"), "potato_tomato_final.mp4")
