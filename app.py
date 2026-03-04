@@ -6,6 +6,9 @@ import os
 from PIL import Image
 
 
+import streamlit as st
+from PIL import Image
+
 # --- CSS TO HIDE THE MESSY FILENAMES AND CROSS BUTTONS ---
 st.markdown("""
     <style>
