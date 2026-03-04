@@ -5,9 +5,17 @@ import tempfile
 import os
 from PIL import Image
 
+# --- CONFIG & TITLES ---
+st.set_page_config(page_title="potato pohtato", page_icon="🥔")
+st.title("🥔 Do you like potatoes?")
 
-import streamlit as st
-from PIL import Image
+AUDIO_PATH = "song.mp3" 
+
+LYRICS = [
+    ("Lazy", "..."), ("Crazy", "..."), ("Scratching", "..."), ("Sports cars", "..."),
+    ("I like", "potatoes"), ("I don't like", "tomatoes :("), 
+    ("I'm goin'", "fishin'"), ("'Cause I'm on", "a mission")
+]
 
 # --- CSS TO HIDE THE MESSY FILENAMES AND CROSS BUTTONS ---
 st.markdown("""
@@ -37,7 +45,7 @@ with col_left:
         for idx, img_file in enumerate(set_a):
             with cols[idx]:
                 st.image(Image.open(img_file), use_container_width=True)
-                st.caption(f"Photo {idx+1}") # Replaces filename with Photo 1, 2, etc.
+                st.caption(f"Photo {idx+1}")
 
 with col_right:
     st.markdown("### 📸 You and yours")
@@ -50,50 +58,11 @@ with col_right:
         for idx, img_file in enumerate(set_b):
             with cols[idx]:
                 st.image(Image.open(img_file), use_container_width=True)
-                st.caption(f"Photo {idx+5}") # Continues the count for the second set
+                st.caption(f"Photo {idx+5}")
 
 st.divider()
 
-st.set_page_config(page_title="potato pohtato", page_icon="🥔")
-st.title("🥔 Do you like potatoes?")
-
-AUDIO_PATH = "song.mp3" 
-
-LYRICS = [
-    ("Lazy", "..."), ("Crazy", "..."), ("Scratching", "..."), ("Sports cars", "..."),
-    ("I like", "potatoes"), ("I don't like", "tomatoes :("), 
-    ("I'm goin'", "fishin'"), ("'Cause I'm on", "a mission")
-]
-
-# --- UI REFACTOR: SIDE BY SIDE INPUTS ---
-col_left, col_right = st.columns(2)
-
-with col_left:
-    st.markdown("### 📸 You alone")
-    set_a = st.file_uploader("Upload 4 photos", type=['jpg', 'jpeg', 'png'], accept_multiple_files=True, key="alone", label_visibility="collapsed")
-    
-    if set_a:
-        # 1x4 Row inside the left column
-        prev_cols = st.columns(4)
-        for idx, img_file in enumerate(set_a):
-            with prev_cols[idx]:
-                st.image(Image.open(img_file), use_container_width=True)
-                st.caption(f"{round(img_file.size / 1024, 1)}KB")
-
-with col_right:
-    st.markdown("### 📸 You and yours")
-    set_b = st.file_uploader("Upload 4 photos", type=['jpg', 'jpeg', 'png'], accept_multiple_files=True, key="yours", label_visibility="collapsed")
-    
-    if set_b:
-        # 1x4 Row inside the right column
-        prev_cols = st.columns(4)
-        for idx, img_file in enumerate(set_b):
-            with prev_cols[idx]:
-                st.image(Image.open(img_file), use_container_width=True)
-                st.caption(f"{round(img_file.size / 1024, 1)}KB")
-
-st.divider()
-
+# --- GENERATION LOGIC ---
 if st.button("✨ Generate My Nostalgic Reel", use_container_width=True):
     if len(set_a) != 4 or len(set_b) != 4:
         st.error("Please upload exactly 4 photos in BOTH sections!")
