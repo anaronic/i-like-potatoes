@@ -3,52 +3,71 @@ from moviepy import ImageClip, CompositeVideoClip, AudioFileClip, ColorClip
 import tempfile
 import os
 
-st.title("🥔")
+st.title("🥔 8-Photo Potato/Tomato Reveal (v2.0)")
 
-uploaded_files = st.file_uploader("Upload 8 Photos (in order)", type=['jpg', 'png'], accept_multiple_files=True)
-audio_file = os.path.join(os.getcwd(), "song.mp3")
+# 1. Path to your file in the GitHub repo
+AUDIO_PATH = "song.mp3" 
 
-if st.button("Generate") and len(uploaded_files) == 8 and audio_file:
-    with st.spinner("Syncing 8 photos to the beat..."):
-        # Save files to temp
-        temp_dir = tempfile.mkdtemp()
-        img_paths = [os.path.join(temp_dir, f"img_{i}.jpg") for i in range(8)]
-        for i, f in enumerate(uploaded_files):
-            with open(img_paths[i], "wb") as out:
-                out.write(f.getvalue())
-        
-        audio_path = os.path.join(temp_dir, "audio.mp3")
-        with open(audio_path, "wb") as f:
-            f.write(audio_file.getvalue())
+uploaded_files = st.file_uploader("Upload 8 Photos", type=['jpg', 'jpeg', 'png'], accept_multiple_files=True)
 
-        # Logic
-        beat_duration = 0.75  # The 'pulse' of the song
-        layers = [ColorClip(size=(1080, 1920), color=(0,0,0)).set_duration(beat_duration * 8)]
-
-        for i, path in enumerate(img_paths):
-            start_time = i * beat_duration
+if st.button("Generate Reel"):
+    if len(uploaded_files) != 8:
+        st.error("Please upload exactly 8 photos!")
+    elif not os.path.isfile(AUDIO_PATH):
+        st.error(f"Error: '{AUDIO_PATH}' not found in repo. Check filename casing!")
+    else:
+        with st.spinner("🎬 Syncing to the beat..."):
+            # 2. Save Images to Temp
+            temp_dir = tempfile.mkdtemp()
+            img_paths = []
             
-            # Prepare image (9:16 ratio)
-            clip = ImageClip(path).resize(height=1920).set_duration(beat_duration)
-            if clip.w > 1080:
-                clip = clip.crop(x_center=clip.w/2, width=1080)
+            # Use the order they were uploaded
+            for i, uploaded_file in enumerate(uploaded_files):
+                path = os.path.join(temp_dir, f"img_{i}.jpg")
+                with open(path, "wb") as f:
+                    f.write(uploaded_file.read())
+                img_paths.append(path)
 
-            # --- THE REVEAL ---
-            # 1. Left half appears at the start of the beat
-            left = clip.crop(x1=0, y1=0, x2=540, y2=1920).set_start(start_time).set_position((0,0))
+            # 3. Timing Logic
+            beat_duration = 0.75 
+            total_duration = beat_duration * 8
             
-            # 2. Right half appears halfway through the beat (approx 0.37s later)
-            right_offset = beat_duration * 0.4 
-            right = clip.crop(x1=540, y1=0, x2=1080, y2=1920).set_start(start_time + right_offset).set_position((540,0))
+            # Create the black background layer
+            bg = ColorClip(size=(1080, 1920), color=(0,0,0)).with_duration(total_duration)
+            layers = [bg]
+
+            for i, path in enumerate(img_paths):
+                start_time = i * beat_duration
+                
+                # Setup clip (9:16) - Using v2.0 .with_duration()
+                clip = ImageClip(path).with_duration(beat_duration).resized(height=1920)
+                
+                # Center crop if too wide
+                if clip.w > 1080:
+                    clip = clip.cropped(x_center=clip.w/2, width=1080)
+
+                # Reveal Left then Right
+                # .with_start() and .with_position() are the v2.0 standard
+                left = (clip.cropped(x1=0, y1=0, x2=540, y2=1920)
+                        .with_start(start_time)
+                        .with_position((0,0)))
+                
+                right_offset = beat_duration * 0.4 
+                right = (clip.cropped(x1=540, y1=0, x2=1080, y2=1920)
+                         .with_start(start_time + right_offset)
+                         .with_position((540,0)))
+                
+                layers.extend([left, right])
+
+            # 4. Audio & Final Export
+            audio = AudioFileClip(AUDIO_PATH).with_section(0, total_duration)
+            final_vid = CompositeVideoClip(layers, size=(1080, 1920)).with_audio(audio)
             
-            layers.extend([left, right])
+            out_file = os.path.join(temp_dir, "final_reel.mp4")
+            
+            # MoviePy 2.0 still uses write_videofile
+            final_vid.write_videofile(out_file, fps=24, codec="libx264", audio_codec="aac")
 
-        # Render
-        final_audio = AudioFileClip(audio_path).subclip(0, beat_duration * 8)
-        final_vid = CompositeVideoClip(layers, size=(1080, 1920)).set_audio(final_audio)
-        
-        out_file = os.path.join(temp_dir, "reel.mp4")
-        final_vid.write_videofile(out_file, fps=24, codec="libx264")
-
-        st.video(out_file)
-        st.download_button("Download", open(out_file, "rb"), "potato_edit.mp4")
+            # 5. Display
+            st.video(out_file)
+            st.download_button("Download Reel", open(out_file, "rb"), "potato_tomato.mp4")
