@@ -16,28 +16,32 @@ LYRICS = [
     ("I'm goin'", "fishin'"), ("'Cause I'm on", "a mission")
 ]
 
-# --- UI SECTION ---
-st.markdown("### 📸 You alone")
-set_a = st.file_uploader("Upload 4 photos", type=['jpg', 'jpeg', 'png'], accept_multiple_files=True, key="alone", label_visibility="collapsed")
+# --- UI REFACTOR: SIDE BY SIDE INPUTS ---
+col_left, col_right = st.columns(2)
 
-if set_a:
-    cols = st.columns(4)
-    for idx, img_file in enumerate(set_a):
-        with cols[idx]:
-            st.image(Image.open(img_file), use_container_width=True)
-            st.caption(f"{round(img_file.size / 1024, 1)}KB")
+with col_left:
+    st.markdown("### 📸 You alone")
+    set_a = st.file_uploader("Upload 4 photos", type=['jpg', 'jpeg', 'png'], accept_multiple_files=True, key="alone", label_visibility="collapsed")
+    
+    if set_a:
+        # 1x4 Row inside the left column
+        prev_cols = st.columns(4)
+        for idx, img_file in enumerate(set_a):
+            with prev_cols[idx]:
+                st.image(Image.open(img_file), use_container_width=True)
+                st.caption(f"{round(img_file.size / 1024, 1)}KB")
 
-st.divider()
-
-st.markdown("### 📸 You and yours")
-set_b = st.file_uploader("Upload 4 photos", type=['jpg', 'jpeg', 'png'], accept_multiple_files=True, key="yours", label_visibility="collapsed")
-
-if set_b:
-    cols = st.columns(4)
-    for idx, img_file in enumerate(set_b):
-        with cols[idx]:
-            st.image(Image.open(img_file), use_container_width=True)
-            st.caption(f"{round(img_file.size / 1024, 1)}KB")
+with col_right:
+    st.markdown("### 📸 You and yours")
+    set_b = st.file_uploader("Upload 4 photos", type=['jpg', 'jpeg', 'png'], accept_multiple_files=True, key="yours", label_visibility="collapsed")
+    
+    if set_b:
+        # 1x4 Row inside the right column
+        prev_cols = st.columns(4)
+        for idx, img_file in enumerate(set_b):
+            with prev_cols[idx]:
+                st.image(Image.open(img_file), use_container_width=True)
+                st.caption(f"{round(img_file.size / 1024, 1)}KB")
 
 st.divider()
 
@@ -47,7 +51,7 @@ if st.button("✨ Generate My Nostalgic Reel", use_container_width=True):
     elif not os.path.isfile(AUDIO_PATH):
         st.error(f"'{AUDIO_PATH}' not found!")
     else:
-        with st.spinner("🎞️ Adding grain and nostalgic glow..."):
+        with st.spinner("🎞️ Adding heavy grain and vignette glow..."):
             temp_dir = tempfile.mkdtemp()
             all_files = set_a + set_b
             img_paths = [os.path.join(temp_dir, f"img_{i}.jpg") for i in range(8)]
@@ -55,6 +59,7 @@ if st.button("✨ Generate My Nostalgic Reel", use_container_width=True):
                 with open(img_paths[i], "wb") as out:
                     out.write(f.getvalue())
 
+            # --- DIMENSIONS & TIMING ---
             W, H = 1080, 1350
             HALF_W = W // 2
             TEXT_BOX_H = 150
@@ -92,25 +97,22 @@ if st.button("✨ Generate My Nostalgic Reel", use_container_width=True):
                                create_text(r_txt, p_start + interval_len, interval_len, HALF_W)])
 
             # --- NOSTALGIC EFFECTS ---
-            
-            # 1. HEAVIER GRAIN (Increased to 0.15)
+            # 1. HEAVIER GRAIN
             noise = np.random.randint(0, 55, (H, W, 3), dtype='uint8')
             grain = (ImageClip(noise).with_duration(total_duration)
                      .with_opacity(0.15).with_position((0,0)))
             
-            # 2. OLD SCHOOL GLOW (Vignette Overlay)
-            # Creating a simple radial gradient mask using numpy
+            # 2. VIGNETTE GLOW
             x = np.linspace(-1, 1, W)
             y = np.linspace(-1, 1, H)
             X, Y = np.meshgrid(x, y)
-            # Create a radial drop-off (vignette)
             vignette_data = np.sqrt(X**2 + Y**2)
             vignette_data = (vignette_data / vignette_data.max()) * 255
             vignette_mask = np.stack([vignette_data]*3, axis=-1).astype('uint8')
             
             glow_vignette = (ImageClip(vignette_mask)
                              .with_duration(total_duration)
-                             .with_opacity(0.25) # Subtle dark edges
+                             .with_opacity(0.25)
                              .with_position((0,0)))
 
             layers.extend([glow_vignette, grain])
@@ -123,4 +125,4 @@ if st.button("✨ Generate My Nostalgic Reel", use_container_width=True):
             final_vid.write_videofile(out_file, fps=24, codec="libx264", audio_codec="aac")
 
             st.video(out_file)
-            st.download_button("Download Nostalgic Reel 🎬", open(out_file, "rb"), "potato_nostalgia.mp4")
+            st.download_button("Download My Masterpiece 🎬", open(out_file, "rb"), "potato_nostalgia_final.mp4")
