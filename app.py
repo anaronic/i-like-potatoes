@@ -5,22 +5,18 @@ import tempfile
 import os
 from PIL import Image
 
-# --- ULTIMATE CSS TO HIDE UPLOAD INFO & METADATA ---
+
+# --- CSS TO HIDE ONLY FILENAMES AND CROSS BUTTONS ---
 st.markdown("""
     <style>
-    /* Hides the entire file list container under the uploader */
+    /* This targets the container holding the filenames, sizes, and 'X' buttons */
     [data-testid="stFileUploaderFileList"] {
         display: none !important;
     }
-    
-    /* Hides the 'Drag and drop' helper text for a cleaner look */
-    [data-testid="stFileUploaderDropzoneInstructions"] {
-        display: none !important;
-    }
 
-    /* Optional: Makes the uploader button more prominent since the text is gone */
+    /* Ensures the uploader doesn't leave a weird gap where the list used to be */
     .stFileUploader {
-        padding-bottom: 1rem;
+        margin-bottom: -20px;
     }
     </style>
 """, unsafe_allow_html=True)
