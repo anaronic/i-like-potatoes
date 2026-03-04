@@ -22,7 +22,7 @@ LYRICS = [
 
 uploaded_files = st.file_uploader("Upload 8 Photos", type=['jpg', 'jpeg', 'png'], accept_multiple_files=True)
 
-if st.button("Generate a cute reel"):
+if st.button("Generate my reel"):
     if len(uploaded_files) != 8:
         st.error("Please upload exactly 8 photos!")
     elif not os.path.isfile(AUDIO_PATH):
