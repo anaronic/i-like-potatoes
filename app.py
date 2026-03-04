@@ -49,7 +49,7 @@ with col_left:
                 st.caption(f"Photo {idx+1}")
 
 with col_right:
-    st.markdown("### 📸 You (on the left) and yours")
+    st.markdown("### 📸 You and yours")
     set_b = st.file_uploader("Upload 4 photos", type=['jpg', 'jpeg', 'png'], 
                              accept_multiple_files=True, key="yours", 
                              label_visibility="collapsed")
