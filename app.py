@@ -28,7 +28,7 @@ if st.button("Generate a cute reel"):
     elif not os.path.isfile(AUDIO_PATH):
         st.error(f"'{AUDIO_PATH}' not found in GitHub!")
     else:
-        with st.spinner("Generating your masterpiece..."):
+        with st.spinner("Generating..."):
             temp_dir = tempfile.mkdtemp()
             img_paths = [os.path.join(temp_dir, f"img_{i}.jpg") for i in range(8)]
             for i, f in enumerate(uploaded_files):
@@ -38,27 +38,29 @@ if st.button("Generate a cute reel"):
             # --- DIMENSIONS & TIMING ---
             W, H = 1080, 1350
             HALF_W = W // 2 # 540
+            TEXT_BOX_H = 200 # Fixed height for the text container to prevent chopping
             total_duration = 16.54
             interval_len = total_duration / 16
             photo_len = interval_len * 2
             
             layers = [ColorClip(size=(W, H), color=(0,0,0)).with_duration(total_duration)]
 
-            # --- FIXED TEXT FUNCTION ---
+            # --- REFINED TEXT FUNCTION ---
             def create_text(txt, start, duration, x_offset):
                 return (TextClip(
                         text=txt,
-                        font_size=65, # Slightly smaller to ensure it fits
+                        font_size=80,
                         color='white',
                         font='DejaVuSans-Bold', 
                         stroke_color='black',
                         stroke_width=2,
-                        method='label',
-                        size=(HALF_W, None) # Constraint width to half-box, auto-height
+                        method='caption', # Caption is better for centering without chopping
+                        size=(HALF_W, TEXT_BOX_H), # Set a defined box
+                        text_align='center' # Align horizontally inside box
                     )
                     .with_start(start)
                     .with_duration(duration)
-                    # Center the 540px box at the correct X position
+                    # Vertical 'center' for the box itself
                     .with_position((x_offset, 'center')))
 
             for i, path in enumerate(img_paths):
@@ -79,8 +81,6 @@ if st.button("Generate a cute reel"):
                              .with_start(p_start + interval_len).with_position((HALF_W, 0)))
 
                 # --- CENTERED TEXT LAYERS ---
-                # We place a 540px wide text box at x=0 (left) and x=540 (right)
-                # MoviePy's 'center' inside the box will handle the rest.
                 l_text = create_text(left_text_str, p_start, photo_len, 0)
                 r_text = create_text(right_text_str, p_start + interval_len, interval_len, HALF_W)
 
@@ -89,7 +89,7 @@ if st.button("Generate a cute reel"):
             # --- GRAINY FILTER ---
             noise = np.random.randint(0, 40, (H, W, 3), dtype='uint8')
             grain = (ImageClip(noise).with_duration(total_duration)
-                     .with_opacity(0.1).with_position((0,0)))
+                     .with_opacity(0.08).with_position((0,0)))
             layers.append(grain)
 
             # --- AUDIO & EXPORT ---
