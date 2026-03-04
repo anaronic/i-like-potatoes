@@ -6,7 +6,7 @@ import os
 st.title("🥔")
 
 uploaded_files = st.file_uploader("Upload 8 Photos (in order)", type=['jpg', 'png'], accept_multiple_files=True)
-audio_file = "song.mp3" 
+audio_file = os.path.join(os.getcwd(), "song.mp3")
 
 if st.button("Generate") and len(uploaded_files) == 8 and audio_file:
     with st.spinner("Syncing 8 photos to the beat..."):
