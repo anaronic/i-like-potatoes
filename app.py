@@ -5,6 +5,20 @@ import tempfile
 import os
 from PIL import Image
 
+# --- CSS TO HIDE UPLOADED FILE INFO ---
+st.markdown("""
+    <style>
+    /* Hide the list of uploaded files and their sizes */
+    [data-testid="stFileUploaderFileList"] {
+        display: none;
+    }
+    </style>
+""", unsafe_allow_html=True)
+
+# Rest of your side-by-side uploader code...
+col_left, col_right = st.columns(2)
+# ... etc
+
 st.set_page_config(page_title="potato pohtato", page_icon="🥔")
 st.title("🥔 Do you like potatoes?")
 
