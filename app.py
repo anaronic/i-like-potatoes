@@ -3,10 +3,10 @@ from moviepy import ImageClip, CompositeVideoClip, AudioFileClip, ColorClip
 import tempfile
 import os
 
-st.title("🥔 8-Photo 'Lazy Confessions' Edit")
+st.title("🥔")
 
 uploaded_files = st.file_uploader("Upload 8 Photos (in order)", type=['jpg', 'png'], accept_multiple_files=True)
-audio_file = st.file_uploader("Upload Audio", type=['mp3'])
+audio_file = "song.mp3" 
 
 if st.button("Generate") and len(uploaded_files) == 8 and audio_file:
     with st.spinner("Syncing 8 photos to the beat..."):
