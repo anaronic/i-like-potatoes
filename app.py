@@ -6,24 +6,50 @@ import os
 from PIL import Image
 
 
-# --- CSS TO HIDE ONLY FILENAMES AND CROSS BUTTONS ---
+# --- CSS TO HIDE THE MESSY FILENAMES AND CROSS BUTTONS ---
 st.markdown("""
     <style>
-    /* This targets the container holding the filenames, sizes, and 'X' buttons */
+    /* Hides the default Streamlit file list (hex names, sizes, and 'X') */
     [data-testid="stFileUploaderFileList"] {
         display: none !important;
     }
-
-    /* Ensures the uploader doesn't leave a weird gap where the list used to be */
+    /* Tightens the gap between the uploader and your custom grid */
     .stFileUploader {
-        margin-bottom: -20px;
+        margin-bottom: -10px;
     }
     </style>
 """, unsafe_allow_html=True)
 
-# Rest of your side-by-side uploader code...
+# --- SIDE-BY-SIDE INPUTS ---
 col_left, col_right = st.columns(2)
-# ... etc
+
+with col_left:
+    st.markdown("### 📸 You alone")
+    set_a = st.file_uploader("Upload 4 photos", type=['jpg', 'jpeg', 'png'], 
+                             accept_multiple_files=True, key="alone", 
+                             label_visibility="collapsed")
+    if set_a:
+        # Displaying custom "Photo X" labels in a 1x4 row
+        cols = st.columns(4)
+        for idx, img_file in enumerate(set_a):
+            with cols[idx]:
+                st.image(Image.open(img_file), use_container_width=True)
+                st.caption(f"Photo {idx+1}") # Replaces filename with Photo 1, 2, etc.
+
+with col_right:
+    st.markdown("### 📸 You and yours")
+    set_b = st.file_uploader("Upload 4 photos", type=['jpg', 'jpeg', 'png'], 
+                             accept_multiple_files=True, key="yours", 
+                             label_visibility="collapsed")
+    if set_b:
+        # Displaying custom "Photo X" labels in a 1x4 row
+        cols = st.columns(4)
+        for idx, img_file in enumerate(set_b):
+            with cols[idx]:
+                st.image(Image.open(img_file), use_container_width=True)
+                st.caption(f"Photo {idx+5}") # Continues the count for the second set
+
+st.divider()
 
 st.set_page_config(page_title="potato pohtato", page_icon="🥔")
 st.title("🥔 Do you like potatoes?")
