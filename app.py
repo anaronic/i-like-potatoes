@@ -66,14 +66,14 @@ with col_right:
 st.divider()
 
 # --- GENERATION LOGIC ---
-if st.button("✨ Generate My Nostalgic Reel", use_container_width=True):
+if st.button("✨ Generate My Reel", use_container_width=True):
     # Strict validation check
     if len(set_a) < 4 or len(set_b) < 4:
         st.error("Please upload exactly 4 photos in BOTH sections to continue!")
     elif not os.path.isfile(AUDIO_PATH):
         st.error(f"'{AUDIO_PATH}' not found!")
     else:
-        with st.spinner("🎞️ Processing your 8 photos..."):
+        with st.spinner("🎞️ Processing..."):
             temp_dir = tempfile.mkdtemp()
             # Combine only the first 4 from each set
             all_files = set_a[:4] + set_b[:4]
@@ -142,4 +142,4 @@ if st.button("✨ Generate My Nostalgic Reel", use_container_width=True):
             final_vid.write_videofile(out_file, fps=24, codec="libx264", audio_codec="aac")
 
             st.video(out_file)
-            st.download_button("Download My Masterpiece 🎬", open(out_file, "rb"), "potato_nostalgia_final.mp4")
+            st.download_button("Download your reel 🎬", open(out_file, "rb"), "potato_nostalgia_final.mp4")
