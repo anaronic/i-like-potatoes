@@ -5,7 +5,7 @@ import tempfile
 import os
 from PIL import Image
 
-st.set_page_config(page_title="potato pohtato", page_icon="🥔", layout="wide")
+st.set_page_config(page_title="potato pohtato", page_icon="🥔", layout="medium")
 st.title("🥔 Do you like potatoes?")
 
 AUDIO_PATH = "song.mp3" 
