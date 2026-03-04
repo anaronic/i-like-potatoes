@@ -60,26 +60,30 @@ if st.button("Generate a cute reel"):
 
                 # --- TEXT LAYERS ---
                 # Styling to match your image: White, Sans-Serif, with a black stroke
-                def create_text(txt, start, duration, pos_x):
+                # --- Updated Text Function for Linux/Streamlit Compatibility ---
+                def create_text(txt, start, duration, center_x):
                     return (TextClip(
-                                text=txt,
-                                font_size=70,
-                                color='white',
-                                font='Arial-Bold', # Standard Linux font
-                                stroke_color='black',
-                                stroke_width=2,
-                                method='label'
-                            )
-                            .with_start(start)
-                            .with_duration(duration)
-                            .with_position((pos_x, 'center')))
+                    text=txt,
+                    font_size=75,
+                    color='white',
+                    # Use DejaVuSans-Bold for Linux compatibility
+                    font='DejaVuSans-Bold', 
+                    stroke_color='black',
+                    stroke_width=2,
+                    method='label'
+            )
+                .with_start(start)
+                .with_duration(duration)
+                # 'center' for Y, and our calculated center_x for X
+                .with_position((center_x, 'center')))
 
-                # Left Text: Displays for the full 2 intervals (photo_len)
-                # Position: Center of the left half (540/2 = 270)
-                l_text = create_text(left_text_str, p_start, photo_len, 270 - 100) 
-                
-                # Right Text: Displays only starting at interval 2
-                # Position: Center of the right half (540 + 270 = 810)
+# --- Updated Positioning Logic ---
+# Center of Left Half (0 to 540) is 270
+# Center of Right Half (540 to 1080) is 810
+# Note: MoviePy positions from the TOP-LEFT of the text clip, 
+# so we use 'center' in the tuple to help MoviePy handle the alignment.
+
+                l_text = create_text(left_text_str, p_start, photo_len, 270 - 100) # Offset for width
                 r_text = create_text(right_text_str, p_start + interval_len, interval_len, 810 - 100)
 
                 layers.extend([left_img, right_img, l_text, r_text])
