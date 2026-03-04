@@ -1,5 +1,5 @@
 import streamlit as st
-from moviepy import ImageClip, CompositeVideoClip, AudioFileClip, ColorClip
+from moviepy import ImageClip, CompositeVideoClip, AudioFileClip, ColorClip, TextCLip
 import tempfile
 import os
 
@@ -27,7 +27,7 @@ if st.button("Generate a cute reel"):
     elif not os.path.isfile(AUDIO_PATH):
         st.error(f"'{AUDIO_PATH}' not found in GitHub!")
     else:
-        with st.spinner("🎬 Adding text and rendering..."):
+        with st.spinner("Generate..."):
             temp_dir = tempfile.mkdtemp()
             img_paths = [os.path.join(temp_dir, f"img_{i}.jpg") for i in range(8)]
             for i, f in enumerate(uploaded_files):
