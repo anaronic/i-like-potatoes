@@ -28,7 +28,7 @@ if st.button("Generate a cute reel"):
     elif not os.path.isfile(AUDIO_PATH):
         st.error(f"'{AUDIO_PATH}' not found in GitHub!")
     else:
-        with st.spinner("Generate..."):
+        with st.spinner("Generating your masterpiece..."):
             temp_dir = tempfile.mkdtemp()
             img_paths = [os.path.join(temp_dir, f"img_{i}.jpg") for i in range(8)]
             for i, f in enumerate(uploaded_files):
@@ -37,27 +37,29 @@ if st.button("Generate a cute reel"):
 
             # --- DIMENSIONS & TIMING ---
             W, H = 1080, 1350
+            HALF_W = W // 2 # 540
             total_duration = 16.54
             interval_len = total_duration / 16
             photo_len = interval_len * 2
             
-            # 1. Start with Black Background
             layers = [ColorClip(size=(W, H), color=(0,0,0)).with_duration(total_duration)]
 
-            # Helper function for Text (moved inside logic for scope)
-            def create_text(txt, start, duration, center_x):
+            # --- FIXED TEXT FUNCTION ---
+            def create_text(txt, start, duration, x_offset):
                 return (TextClip(
                         text=txt,
-                        font_size=75,
+                        font_size=65, # Slightly smaller to ensure it fits
                         color='white',
                         font='DejaVuSans-Bold', 
                         stroke_color='black',
                         stroke_width=2,
-                        method='label'
+                        method='label',
+                        size=(HALF_W, None) # Constraint width to half-box, auto-height
                     )
                     .with_start(start)
                     .with_duration(duration)
-                    .with_position((center_x - 150, 'center'))) # Offset to help center the text block
+                    # Center the 540px box at the correct X position
+                    .with_position((x_offset, 'center')))
 
             for i, path in enumerate(img_paths):
                 p_start = i * photo_len
@@ -69,30 +71,28 @@ if st.button("Generate a cute reel"):
                     clip = clip.cropped(x_center=clip.w/2, width=W)
 
                 # --- VISUAL REVEALS ---
-                left_img = (clip.cropped(x1=0, y1=0, x2=540, y2=H)
+                left_img = (clip.cropped(x1=0, y1=0, x2=HALF_W, y2=H)
                             .with_start(p_start).with_position((0, 0)))
                 
-                right_img = (clip.cropped(x1=540, y1=0, x2=W, y2=H)
+                right_img = (clip.cropped(x1=HALF_W, y1=0, x2=W, y2=H)
                              .with_duration(interval_len)
-                             .with_start(p_start + interval_len).with_position((540, 0)))
+                             .with_start(p_start + interval_len).with_position((HALF_W, 0)))
 
-                # --- TEXT LAYERS ---
-                # Left center is 270, Right center is 810
-                l_text = create_text(left_text_str, p_start, photo_len, 270)
-                r_text = create_text(right_text_str, p_start + interval_len, interval_len, 810)
+                # --- CENTERED TEXT LAYERS ---
+                # We place a 540px wide text box at x=0 (left) and x=540 (right)
+                # MoviePy's 'center' inside the box will handle the rest.
+                l_text = create_text(left_text_str, p_start, photo_len, 0)
+                r_text = create_text(right_text_str, p_start + interval_len, interval_len, HALF_W)
 
                 layers.extend([left_img, right_img, l_text, r_text])
 
-            # --- 2. GRAINY MOVIE FILTER ---
-            # Create a static noise frame for that "Stranger Things" texture
-            noise = np.random.randint(0, 45, (H, W, 3), dtype='uint8')
-            grain_layer = (ImageClip(noise)
-                           .with_duration(total_duration)
-                           .with_opacity(0.1) # Subtle 10% grain
-                           .with_position((0,0)))
-            layers.append(grain_layer)
+            # --- GRAINY FILTER ---
+            noise = np.random.randint(0, 40, (H, W, 3), dtype='uint8')
+            grain = (ImageClip(noise).with_duration(total_duration)
+                     .with_opacity(0.1).with_position((0,0)))
+            layers.append(grain)
 
-            # --- 3. AUDIO & EXPORT ---
+            # --- AUDIO & EXPORT ---
             audio = AudioFileClip(AUDIO_PATH).subclipped(0, total_duration)
             final_vid = CompositeVideoClip(layers, size=(W, H)).with_audio(audio)
             
@@ -100,4 +100,4 @@ if st.button("Generate a cute reel"):
             final_vid.write_videofile(out_file, fps=24, codec="libx264", audio_codec="aac")
 
             st.video(out_file)
-            st.download_button("Download and share it with your tomato hater.", open(out_file, "rb"), "potato_tomato_final.mp4")
+            st.download_button("Download Reel", open(out_file, "rb"), "potato_tomato_final.mp4")
