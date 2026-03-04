@@ -3,20 +3,20 @@ from moviepy import ImageClip, CompositeVideoClip, AudioFileClip, ColorClip
 import tempfile
 import os
 
-st.set_page_config(page_title="Potato Reveal 4:5", page_icon="🥔")
-st.title("🥔 8-Photo Sync (4:5 Ratio)")
+st.set_page_config(page_title="potato pohtato", page_icon="🥔")
+st.title("🥔 Do you like potatoes?")
 
 AUDIO_PATH = "song.mp3" 
 
 uploaded_files = st.file_uploader("Upload 8 Photos", type=['jpg', 'jpeg', 'png'], accept_multiple_files=True)
 
-if st.button("Generate 4:5 Reel"):
+if st.button("Generate a cute reel"):
     if len(uploaded_files) != 8:
         st.error("Please upload exactly 8 photos!")
     elif not os.path.isfile(AUDIO_PATH):
         st.error(f"'{AUDIO_PATH}' not found in GitHub!")
     else:
-        with st.spinner("🎬 Rendering in 4:5 Social Format..."):
+        with st.spinner("🎬 Generating..."):
             temp_dir = tempfile.mkdtemp()
             img_paths = []
             
@@ -72,4 +72,4 @@ if st.button("Generate 4:5 Reel"):
             final_vid.write_videofile(out_file, fps=24, codec="libx264", audio_codec="aac")
 
             st.video(out_file)
-            st.download_button("Download 4:5 Reel", open(out_file, "rb"), "potato_4_5.mp4")
+            st.download_button("Download and send it to your tomato hater", open(out_file, "rb"), "potato_4_5.mp4")
