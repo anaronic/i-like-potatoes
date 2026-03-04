@@ -1,5 +1,5 @@
 import streamlit as st
-from moviepy import ImageClip, CompositeVideoClip, AudioFileClip, ColorClip, TextCLip
+from moviepy import ImageClip, CompositeVideoClip, AudioFileClip, ColorClip, TextClip
 import tempfile
 import os
 
