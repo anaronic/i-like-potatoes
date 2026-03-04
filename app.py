@@ -20,11 +20,9 @@ LYRICS = [
 # --- CSS TO HIDE THE MESSY FILENAMES AND CROSS BUTTONS ---
 st.markdown("""
     <style>
-    /* Hides the default Streamlit file list (hex names, sizes, and 'X') */
     [data-testid="stFileUploaderFileList"] {
         display: none !important;
     }
-    /* Tightens the gap between the uploader and your custom grid */
     .stFileUploader {
         margin-bottom: -10px;
     }
@@ -36,13 +34,16 @@ col_left, col_right = st.columns(2)
 
 with col_left:
     st.markdown("### 📸 You alone")
+    # Set max_files=4 to prevent over-uploading in the UI
     set_a = st.file_uploader("Upload 4 photos", type=['jpg', 'jpeg', 'png'], 
                              accept_multiple_files=True, key="alone", 
                              label_visibility="collapsed")
     if set_a:
-        # Displaying custom "Photo X" labels in a 1x4 row
+        if len(set_a) > 4:
+            st.warning("Only the first 4 photos will be used.")
         cols = st.columns(4)
-        for idx, img_file in enumerate(set_a):
+        # Force limit to 4 photos
+        for idx, img_file in enumerate(set_a[:4]):
             with cols[idx]:
                 st.image(Image.open(img_file), use_container_width=True)
                 st.caption(f"Photo {idx+1}")
@@ -53,9 +54,11 @@ with col_right:
                              accept_multiple_files=True, key="yours", 
                              label_visibility="collapsed")
     if set_b:
-        # Displaying custom "Photo X" labels in a 1x4 row
+        if len(set_b) > 4:
+            st.warning("Only the first 4 photos will be used.")
         cols = st.columns(4)
-        for idx, img_file in enumerate(set_b):
+        # Force limit to 4 photos
+        for idx, img_file in enumerate(set_b[:4]):
             with cols[idx]:
                 st.image(Image.open(img_file), use_container_width=True)
                 st.caption(f"Photo {idx+5}")
@@ -64,14 +67,16 @@ st.divider()
 
 # --- GENERATION LOGIC ---
 if st.button("✨ Generate My Nostalgic Reel", use_container_width=True):
-    if len(set_a) != 4 or len(set_b) != 4:
-        st.error("Please upload exactly 4 photos in BOTH sections!")
+    # Strict validation check
+    if len(set_a) < 4 or len(set_b) < 4:
+        st.error("Please upload exactly 4 photos in BOTH sections to continue!")
     elif not os.path.isfile(AUDIO_PATH):
         st.error(f"'{AUDIO_PATH}' not found!")
     else:
-        with st.spinner("🎞️ Adding heavy grain and vignette glow..."):
+        with st.spinner("🎞️ Processing your 8 photos..."):
             temp_dir = tempfile.mkdtemp()
-            all_files = set_a + set_b
+            # Combine only the first 4 from each set
+            all_files = set_a[:4] + set_b[:4]
             img_paths = [os.path.join(temp_dir, f"img_{i}.jpg") for i in range(8)]
             for i, f in enumerate(all_files):
                 with open(img_paths[i], "wb") as out:
@@ -115,27 +120,21 @@ if st.button("✨ Generate My Nostalgic Reel", use_container_width=True):
                                create_text(r_txt, p_start + interval_len, interval_len, HALF_W)])
 
             # --- NOSTALGIC EFFECTS ---
-            # 1. HEAVIER GRAIN
             noise = np.random.randint(0, 55, (H, W, 3), dtype='uint8')
             grain = (ImageClip(noise).with_duration(total_duration)
                      .with_opacity(0.15).with_position((0,0)))
             
-            # 2. VIGNETTE GLOW
-            x = np.linspace(-1, 1, W)
-            y = np.linspace(-1, 1, H)
+            x = np.linspace(-1, 1, W); y = np.linspace(-1, 1, H)
             X, Y = np.meshgrid(x, y)
             vignette_data = np.sqrt(X**2 + Y**2)
             vignette_data = (vignette_data / vignette_data.max()) * 255
             vignette_mask = np.stack([vignette_data]*3, axis=-1).astype('uint8')
             
-            glow_vignette = (ImageClip(vignette_mask)
-                             .with_duration(total_duration)
-                             .with_opacity(0.25)
-                             .with_position((0,0)))
+            glow_vignette = (ImageClip(vignette_mask).with_duration(total_duration)
+                             .with_opacity(0.25).with_position((0,0)))
 
             layers.extend([glow_vignette, grain])
 
-            # --- EXPORT ---
             audio = AudioFileClip(AUDIO_PATH).subclipped(0, total_duration)
             final_vid = CompositeVideoClip(layers, size=(W, H)).with_audio(audio)
             
