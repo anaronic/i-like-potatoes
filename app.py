@@ -38,29 +38,28 @@ if st.button("Generate a cute reel"):
             # --- DIMENSIONS & TIMING ---
             W, H = 1080, 1350
             HALF_W = W // 2 # 540
-            TEXT_BOX_H = 200 # Fixed height for the text container to prevent chopping
+            TEXT_BOX_H = 150 # Reduced slightly to match smaller text
             total_duration = 16.54
             interval_len = total_duration / 16
             photo_len = interval_len * 2
             
             layers = [ColorClip(size=(W, H), color=(0,0,0)).with_duration(total_duration)]
 
-            # --- REFINED TEXT FUNCTION ---
+            # --- TEXT FUNCTION (25% Smaller) ---
             def create_text(txt, start, duration, x_offset):
                 return (TextClip(
                         text=txt,
-                        font_size=80,
+                        font_size=60, # 25% lower than 80
                         color='white',
                         font='DejaVuSans-Bold', 
                         stroke_color='black',
                         stroke_width=2,
-                        method='caption', # Caption is better for centering without chopping
-                        size=(HALF_W, TEXT_BOX_H), # Set a defined box
-                        text_align='center' # Align horizontally inside box
+                        method='caption',
+                        size=(HALF_W, TEXT_BOX_H),
+                        text_align='center'
                     )
                     .with_start(start)
                     .with_duration(duration)
-                    # Vertical 'center' for the box itself
                     .with_position((x_offset, 'center')))
 
             for i, path in enumerate(img_paths):
