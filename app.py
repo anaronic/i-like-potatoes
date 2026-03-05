@@ -34,7 +34,6 @@ col_left, col_right = st.columns(2)
 
 with col_left:
     st.markdown("### 📸 You alone")
-    # Set max_files=4 to prevent over-uploading in the UI
     set_a = st.file_uploader("Upload 4 photos", type=['jpg', 'jpeg', 'png'], 
                              accept_multiple_files=True, key="alone", 
                              label_visibility="collapsed")
@@ -42,7 +41,6 @@ with col_left:
         if len(set_a) > 4:
             st.warning("Only the first 4 photos will be used.")
         cols = st.columns(4)
-        # Force limit to 4 photos
         for idx, img_file in enumerate(set_a[:4]):
             with cols[idx]:
                 st.image(Image.open(img_file), use_container_width=True)
@@ -57,7 +55,6 @@ with col_right:
         if len(set_b) > 4:
             st.warning("Only the first 4 photos will be used.")
         cols = st.columns(4)
-        # Force limit to 4 photos
         for idx, img_file in enumerate(set_b[:4]):
             with cols[idx]:
                 st.image(Image.open(img_file), use_container_width=True)
@@ -67,7 +64,6 @@ st.divider()
 
 # --- GENERATION LOGIC ---
 if st.button("✨ Generate My Reel", use_container_width=True):
-    # Strict validation check
     if len(set_a) < 4 or len(set_b) < 4:
         st.error("Please upload exactly 4 photos in BOTH sections to continue!")
     elif not os.path.isfile(AUDIO_PATH):
@@ -75,7 +71,6 @@ if st.button("✨ Generate My Reel", use_container_width=True):
     else:
         with st.spinner("🎞️ Processing..."):
             temp_dir = tempfile.mkdtemp()
-            # Combine only the first 4 from each set
             all_files = set_a[:4] + set_b[:4]
             img_paths = [os.path.join(temp_dir, f"img_{i}.jpg") for i in range(8)]
             for i, f in enumerate(all_files):
@@ -105,9 +100,26 @@ if st.button("✨ Generate My Reel", use_container_width=True):
                 p_start = i * photo_len
                 l_txt, r_txt = LYRICS[i]
                 
-                clip = ImageClip(path).with_duration(photo_len).resized(height=H)
-                if clip.w > W: clip = clip.cropped(x_center=clip.w/2, width=W)
+                # --- NO-BORDER LOGIC ---
+                # Load the image
+                clip = ImageClip(path).with_duration(photo_len)
+                
+                # Resize so it covers the smallest dimension of the target frame
+                # This ensures the frame is always filled
+                clip_ar = clip.w / clip.h
+                target_ar = W / H
+                
+                if clip_ar > target_ar:
+                    # Image is wider than target (landscape) - scale to height
+                    clip = clip.resized(height=H)
+                else:
+                    # Image is narrower than target (portrait) - scale to width
+                    clip = clip.resized(width=W)
+                
+                # Center crop to exactly WxH
+                clip = clip.cropped(x_center=clip.w/2, y_center=clip.h/2, width=W, height=H)
 
+                # Generate the split-screen effect
                 left_img = (clip.cropped(x1=0, y1=0, x2=HALF_W, y2=H)
                             .with_start(p_start).with_position((0, 0)))
                 
